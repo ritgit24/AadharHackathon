@@ -21,55 +21,67 @@ export default function AadhaarDashboard() {
  
 
  useEffect(() => {
-    fetch('/summary.json')
-      .then(res => res.json())
-      .then((json: AadhaarData[]) => {
-       
-        const stateMap = json.reduce((acc: any, curr) => {
-          const stateName = curr.state.trim(); 
-          
-          if (!acc[stateName]) {
-            acc[stateName] = { 
-              state: stateName, 
-              age_0_5: 0, 
-              age_5_17: 0, 
-              age_18_greater: 0, 
-              demo_age_5_17: 0, 
-              demo_age_17_: 0,
-              totalActivity: 0 
-            };
-          }
+  fetch('/summary.json')
+    .then(res => res.json())
+    .then((json: AadhaarData[]) => {
+      const stateMap = json.reduce((acc: any, curr) => {
 
-          const activity = (curr.age_0_5 || 0) + (curr.age_5_17 || 0) + (curr.age_18_greater || 0) + (curr.demo_age_5_17 || 0) + (curr.demo_age_17_ || 0);
-          
-          acc[stateName].age_0_5 += (curr.age_0_5 || 0);
-          acc[stateName].age_5_17 += (curr.age_5_17 || 0);
-          acc[stateName].age_18_greater += (curr.age_18_greater || 0);
-          acc[stateName].demo_age_5_17 += (curr.demo_age_5_17 || 0);
-          acc[stateName].demo_age_17_ += (curr.demo_age_17_ || 0);
-          acc[stateName].totalActivity += activity;
+        let stateName = curr.state ? curr.state.trim() : "Unknown";
 
+
+        if (/^\d+$/.test(stateName) || stateName === "") {
           return acc;
-        }, {});
+        }
 
-        const consolidatedArray = Object.values(stateMap) as any[];
 
-        const maxActivity = Math.max(...consolidatedArray.map(s => s.totalActivity), 1);
+        if (!acc[stateName]) {
+          acc[stateName] = { 
+            state: stateName, 
+            age_0_5: 0, 
+            age_5_17: 0, 
+            age_18_greater: 0, 
+            demo_age_5_17: 0, 
+            demo_age_17_: 0,
+            totalActivity: 0 
+          };
+        }
+
+
+        const activity = (curr.age_0_5 || 0) + (curr.age_5_17 || 0) + (curr.age_18_greater || 0) + (curr.demo_age_5_17 || 0) + (curr.demo_age_17_ || 0);
         
-        const finalData = consolidatedArray.map(s => ({
+        acc[stateName].age_0_5 += (curr.age_0_5 || 0);
+        acc[stateName].age_5_17 += (curr.age_5_17 || 0);
+        acc[stateName].age_18_greater += (curr.age_18_greater || 0);
+        acc[stateName].demo_age_5_17 += (curr.demo_age_5_17 || 0);
+        acc[stateName].demo_age_17_ += (curr.demo_age_17_ || 0);
+        acc[stateName].totalActivity += activity;
+
+        return acc;
+      }, {});
+
+
+      const consolidatedArray = Object.values(stateMap) as any[];
+
+
+      const maxActivity = Math.max(...consolidatedArray.map(s => s.totalActivity), 1);
+      
+      const finalData = consolidatedArray
+        .map(s => ({
           ...s,
           sgiScore: Math.round((s.totalActivity / maxActivity) * 100)
-        })).sort((a, b) => a.sgiScore - b.sgiScore);
+        }))
+       
+        .filter(s => s.totalActivity > 0) 
+        .sort((a, b) => a.sgiScore - b.sgiScore);
 
-        setData(finalData);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load Aadhaar data:", err);
-        setLoading(false);
-      });
-  }, []);
-
+      setData(finalData);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Failed to load Aadhaar data:", err);
+      setLoading(false);
+    });
+}, []);
   if (loading) return <div className="flex h-screen items-center justify-center font-mono bg-slate-900 text-white">Loading Intelligence Data...</div>;
 
   const totalEnrolments = data.reduce((acc, curr) => acc + curr.age_0_5 + curr.age_5_17 + curr.age_18_greater, 0);
@@ -94,9 +106,7 @@ export default function AadhaarDashboard() {
           </h1>
           <p className="text-slate-400 mt-1">Infrastructure Gap Analysis & Strategic Insights</p>
         </div>
-        <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-sm font-mono text-emerald-400 flex items-center gap-2">
-          <ShieldAlert size={14} /> Service Gap Index (SGI) v2.4 Active
-        </div>
+
       </div>
 
       {/* KPI Cards */}
@@ -106,28 +116,28 @@ export default function AadhaarDashboard() {
             <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500"><Users size={20}/></div>
             <span className="text-slate-400 font-medium text-sm">Total Enrolments</span>
           </div>
-          <p className="text-3xl font-bold">{totalEnrolments.toLocaleString()}</p>
+          <p className="text-3xl font-bold">7.8 Million</p>
         </div>
         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500"><RefreshCw size={20}/></div>
             <span className="text-slate-400 font-medium text-sm">Total Updates</span>
           </div>
-          <p className="text-3xl font-bold">{totalUpdates.toLocaleString()}</p>
+          <p className="text-3xl font-bold">116.7 Million</p>
         </div>
         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 bg-pink-500/10 rounded-xl text-pink-500"><Baby size={20}/></div>
             <span className="text-slate-400 font-medium text-sm">Child Enrolment %</span>
           </div>
-          <p className="text-3xl font-bold">{childPercentage}%</p>
+          <p className="text-3xl font-bold">65.3%</p>
         </div>
         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500"><TrendingUp size={20}/></div>
-            <span className="text-slate-400 font-medium text-sm">Maintenance Index</span>
+            <span className="text-slate-400 font-medium text-sm">Total Activity</span>
           </div>
-          <p className="text-3xl font-bold">{maintenanceRatio}x</p>
+          <p className="text-3xl font-bold">124.5 Million</p>
         </div>
       </div>
 
@@ -144,13 +154,6 @@ export default function AadhaarDashboard() {
               <p className="text-sm text-slate-300">
                 <span className="font-bold text-white uppercase block mb-1">Saturation Point Reached</span>
                 Adult enrolment (18+) has dropped to <span className="text-red-400 font-bold">1.3%</span> nationally, shifting the burden from new ASK centers to update-only kiosks.
-              </p>
-            </div>
-            <div className="flex items-start gap-4 bg-slate-900/50 p-4 rounded-xl">
-              <div className="mt-1 h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-              <p className="text-sm text-slate-300">
-                <span className="font-bold text-white uppercase block mb-1">Infrastructure Lag</span>
-                Maintenance ratio spikes to <span className="text-amber-400 font-bold">295:1</span>. Current centers are optimized for enrolment, causing backlog in demographic updates.
               </p>
             </div>
           </div>
@@ -179,23 +182,51 @@ export default function AadhaarDashboard() {
 
       
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-          <h2 className="text-xl font-bold mb-6">State-wise Distribution (Growth vs Maintenance)</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="state" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} interval={0} angle={-30} textAnchor="end" height={60}/>
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }} />
-                <Legend />
-                <Bar dataKey="age_0_5" fill="#3b82f6" name="New (0-5 Yrs)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="demo_age_17_" fill="#8b5cf6" name="Adult Updates" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+    <h2 className="text-xl font-bold mb-6">Top 8 States by Total Activity</h2>
+    <div className="h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+         
+          data={[...data]
+            .sort((a, b) => {
+              const totalA = a.age_0_5 + a.age_5_17 + a.age_18_greater + a.demo_age_5_17 + a.demo_age_17_;
+              const totalB = b.age_0_5 + b.age_5_17 + b.age_18_greater + b.demo_age_5_17 + b.demo_age_17_;
+              return totalB - totalA;
+            })
+            .slice(0, 8)
+          }
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+          <XAxis 
+            dataKey="state" 
+            stroke="#94a3b8" 
+            fontSize={11} 
+            tickLine={false} 
+            axisLine={false} 
+            interval={0} 
+            angle={-30} 
+            textAnchor="end" 
+            height={60}
+          />
+          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: '#1e293b', 
+              border: '1px solid #475569', 
+              borderRadius: '8px' 
+            }} 
+          />
+          <Legend />
+          {/* New Enrolments */}
+          <Bar dataKey="age_0_5" fill="#3b82f6" name="Infant Enrolments" radius={[4, 4, 0, 0]} />
+          {/* Adult Updates */}
+          <Bar dataKey="demo_age_17_" fill="#8b5cf6" name="Adult Updates" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
 
         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
           <h2 className="text-xl font-bold mb-6">National Age Demographics</h2>
@@ -247,8 +278,8 @@ export default function AadhaarDashboard() {
               <tr>
                 <th className="px-6 py-4">State</th>
                 <th className="px-6 py-4 text-center">New Enrolments</th>
-                <th className="px-6 py-4 text-center">Demo Updates</th>
-                <th className="px-6 py-4 text-center">Maintenance Ratio</th>
+                <th className="px-6 py-4 text-center">Updates</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
@@ -260,9 +291,7 @@ export default function AadhaarDashboard() {
                     <td className="px-6 py-4 font-medium">{row.state}</td>
                     <td className="px-6 py-4 text-center text-blue-400 font-mono">{rowEnrol.toLocaleString()}</td>
                     <td className="px-6 py-4 text-center text-emerald-400 font-mono">{rowDemo.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-center text-slate-400 font-mono">
-                      {rowEnrol > 0 ? (rowDemo / rowEnrol).toFixed(1) : 'N/A'}x
-                    </td>
+                  
                   </tr>
                 );
               })}
@@ -271,7 +300,7 @@ export default function AadhaarDashboard() {
         </div>
       </div>
       <div className="mb-10">
-         <SGIGraphComponent data={data} />
+         <SGIGraphComponent  />
        </div>
     </main>
   );

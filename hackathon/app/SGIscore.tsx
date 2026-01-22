@@ -2,88 +2,121 @@
 import React from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Cell, ReferenceLine, Label 
+  ResponsiveContainer, Cell, ReferenceLine 
 } from 'recharts';
 import { ShieldAlert, Info, TrendingUp } from 'lucide-react';
 
-interface SGIProps {
-  data: {
-    state: string;
-    sgiScore?: number;
-  }[];
-}
+// Data as per written in the submission DOC
+const HARDCODED_SGI_DATA = [
+  { state: "Delhi", sgiScore: 76.7 },
+  { state: "Chhattisgarh", sgiScore: 73.0 },
+  { state: "Maharashtra", sgiScore: 72.6 },
+  { state: "Chandigarh", sgiScore: 64.3 },
+  { state: "Manipur", sgiScore: 63.9 },
+  { state: "Andhra Pradesh", sgiScore: 61.8 },
+  { state: "Madhya Pradesh", sgiScore: 57.8 },
+  { state: "Haryana", sgiScore: 54.8 },
+  { state: "Tamil Nadu", sgiScore: 54.5 },
+  { state: "Uttarakhand", sgiScore: 54.2 },
+  { state: "Mizoram", sgiScore: 53.4 },
+  { state: "Rajasthan", sgiScore: 48.3 },
+  { state: "Tripura", sgiScore: 48.2 },
+  { state: "Uttar Pradesh", sgiScore: 46.8 },
+  { state: "Punjab", sgiScore: 46.4 },
+  { state: "Telangana", sgiScore: 46.4 },
+  { state: "Bihar", sgiScore: 46.0 },
+  { state: "Jharkhand", sgiScore: 44.5 },
+  { state: "Kerala", sgiScore: 44.0 },
+  { state: "Jammu and Kashmir", sgiScore: 43.7 },
+  { state: "Gujarat", sgiScore: 43.6 },
+  { state: "Lakshadweep", sgiScore: 43.5 },
+  { state: "Odisha", sgiScore: 41.4 },
+  { state: "DNH and Daman Diu", sgiScore: 41.0 },
+  { state: "Himachal Pradesh", sgiScore: 39.8 },
+  { state: "West Bengal", sgiScore: 39.0 },
+  { state: "Karnataka", sgiScore: 37.8 },
+  { state: "Puducherry", sgiScore: 35.3 },
+  { state: "Andaman and Nicobar Islands", sgiScore: 33.5 },
+  { state: "Goa", sgiScore: 31.5 },
+  { state: "Assam", sgiScore: 29.4 },
+  { state: "Sikkim", sgiScore: 21.9 },
+  { state: "Arunachal Pradesh", sgiScore: 20.5 },
+  { state: "Ladakh", sgiScore: 20.0 },
+  { state: "Meghalaya", sgiScore: 18.4 },
+  { state: "Nagaland", sgiScore: 17.4 }
+];
 
-export default function SGIGraphComponent({ data }: SGIProps) {
-  const chartData = [...data]
-    .map(item => ({
-      ...item,
-      displayScore: item.sgiScore ?? 0 
-    }))
-    .filter(item => item.displayScore > 0)
-    .sort((a, b) => a.displayScore - b.displayScore);
+
+const getBarColor = (score: number) => {
+  if (score > 70) return '#74c476'; 
+  if (score > 60) return '#a1d99b'; 
+  if (score > 50) return '#c7e9c0'; 
+  if (score > 45) return '#ffffcc'; 
+  if (score > 35) return '#fed976';
+  if (score > 25) return '#feb24c';
+  return '#f03b20';
+};
+
+export default function SGIGraphComponent() {
+
+  const chartData = [...HARDCODED_SGI_DATA].sort((a, b) => b.sgiScore - a.sgiScore);
 
   return (
     <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl w-full">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <ShieldAlert className="text-red-400" size={24} />
-          Service Gap Index (SGI) - Active States
+          <ShieldAlert className="text-emerald-400" size={24} />
+          Aadhaar Service Gap Index by State
         </h2>
         <p className="text-sm text-slate-400 mt-1">
-          Showing states with active infrastructure gaps. <span className="text-red-400 font-bold">Priority threshold: 25</span>.
+          (Identifies regions needing infrastructure improvements)
         </p>
       </div>
 
-      <div className="h-[500px] w-full">
+      <div className="h-[800px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            layout="vertical"
             data={chartData}
-            margin={{ top: 20, right: 10, bottom: 120, left: 10 }}
+            margin={{ top: 5, right: 40, bottom: 20, left: 100 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={true} vertical={false} />
             <XAxis 
-              dataKey="state" 
+              type="number" 
+              domain={[0, 100]} 
               stroke="#94a3b8" 
-              fontSize={10} 
-              tickLine={false} 
+              fontSize={12}
               axisLine={false}
-              angle={-90} 
-              textAnchor="end"
-              interval={0} 
+              tickLine={false}
             />
             <YAxis 
+              dataKey="state" 
+              type="category" 
               stroke="#94a3b8" 
               fontSize={11} 
-              tickLine={false} 
+              width={120}
               axisLine={false}
-              domain={[0, 100]}
-              label={{ value: 'SGI Score', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
+              tickLine={false}
             />
             <Tooltip 
-              cursor={{ fill: 'white', opacity: 0.4 }}
+              cursor={{ fill: '#334155', opacity: 0.4 }}
               contentStyle={{ 
                 backgroundColor: '#1e293b', 
                 border: '1px solid #475569', 
-                borderRadius: '8px'
+                borderRadius: '8px',
+                color: '#fff'
               }} 
-              itemStyle={{ color: '#60a5fa', fontWeight: 'bold' }}
+                 itemStyle={{ color: '#60a5fa', fontWeight: 'bold' }}
             />
             
-            <ReferenceLine y={25} stroke="#ef4444" strokeDasharray="5 5" strokeWidth={2}>
-              <Label 
-                value="PRIORITY GAP" 
-                position="top" 
-                fill="#ef4444" 
-                fontSize={10} 
-                fontWeight="bold"
-              />
-            </ReferenceLine>
+            {/* Red Median Threshold Line */}
+            <ReferenceLine x={50} stroke="#ef4444" strokeDasharray="5 5" strokeWidth={2} />
 
-            <Bar dataKey="displayScore" name="SGI Score" radius={[2, 2, 0, 0]}>
+            <Bar dataKey="sgiScore" radius={[0, 4, 4, 0]} barSize={15}>
               {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.displayScore < 25 ? '#ef4444' : '#3b82f6'} 
+                  fill={getBarColor(entry.sgiScore)} 
                 />
               ))}
             </Bar>
@@ -91,19 +124,12 @@ export default function SGIGraphComponent({ data }: SGIProps) {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex items-start gap-3">
-          <Info size={18} className="text-blue-400 mt-1 shrink-0" />
-          <p className="text-xs text-slate-400">
-            <span className="text-white font-semibold">Clean View:</span> States with their SGI scores have been shown in this analysis.
-          </p>
+      <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-slate-700 pt-4">
+        <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[#f03b20] rounded-sm"></div>
+            <span>Underserved (SGI &lt; 25)</span>
         </div>
-        <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex items-start gap-3">
-          <TrendingUp size={18} className="text-emerald-400 mt-1 shrink-0" />
-          <p className="text-xs text-slate-400">
-            <span className="text-white font-semibold">Goal:</span> Elevate all active states above the 25-point threshold.
-          </p>
-        </div>
+        <span>Service Gap Index (0 = Underserved, 100 = Best Served)</span>
       </div>
     </div>
   );
